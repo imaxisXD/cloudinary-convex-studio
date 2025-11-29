@@ -25,6 +25,29 @@ This project uses `@imaxis/cloudinary-convex` for image management. To get start
 
 4.  **Restart Development Server**: If your server is running, restart it to pick up the new configuration.
 
+## Using StudioPro
+
+**StudioPro** is a professional-grade image management and transformation interface built into this template. It features a 3-pane layout designed for desktop productivity:
+
+### 1. Library (Left Sidebar)
+
+- **Upload Images**: Click the large "Upload New" card to open the upload modal. You can drag & drop files or browse your computer. The app automatically handles large files (>5MB) via direct upload to bypass server limits.
+- **Browse**: Scroll through your uploaded assets.
+- **Manage**: Hover over any thumbnail to reveal the **Delete** button.
+
+### 2. Canvas (Center)
+
+- **Selection**: Click any image in the library to load it into the main canvas.
+- **Preview**: See real-time previews of your transformations on a professional checkered background.
+- **Toolbar**: Use the top toolbar to **Reset** all changes or **Download** the final transformed image.
+
+### 3. Inspector (Right Sidebar)
+
+- **Transformation Controls**: When an image is selected, use the Inspector to apply professional edits.
+- **Categories**: Switch between tabs like **Resize**, **Shape**, **Color**, **Artistic**, and **Tune**.
+- **Presets**: One-click apply complex effects (e.g., "Vintage", "Circle Crop", "Grayscale").
+- **Fine-Tuning**: Use sliders in the **Tune** tab to adjust brightness, contrast, and saturation.
+
 ## Get started
 
 If you just cloned this codebase and didn't use `npm create convex`, run:

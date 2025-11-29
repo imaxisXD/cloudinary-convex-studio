@@ -472,7 +472,9 @@ export function ImageStudio() {
             Configure your Cloudinary credentials in Convex.
           </p>
           <code className="block bg-slate-900 text-slate-50 p-4 rounded-lg text-left text-xs font-mono">
-            npx convex env set CLOUDINARY_CLOUD_NAME ...
+            npx convex env set CLOUDINARY_CLOUD_NAME ... <br />
+            npx convex env set CLOUDINARY_API_KEY ... <br />
+            npx convex env set CLOUDINARY_API_SECRET ... <br />
           </code>
         </div>
       </div>
