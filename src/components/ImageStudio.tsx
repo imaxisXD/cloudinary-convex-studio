@@ -310,25 +310,6 @@ const CATEGORY_INFO: Record<
   transform: { label: "Transform", icon: "🔄", description: "Orient & Zoom" },
 };
 
-// --- HELPERS ---
-// These helpers can be used for future compatibility checks
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const isArtisticEffect = (effect: string) =>
-  effect.startsWith("art:") ||
-  effect.startsWith("oil_paint") ||
-  effect === "sketch" ||
-  effect.startsWith("cartoonify");
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const isColorEffect = (effect: string) =>
-  ["blackwhite", "sepia", "grayscale", "invert"].includes(effect);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const isBlurEffect = (effect: string) =>
-  effect.startsWith("blur") ||
-  effect === "sharpen" ||
-  effect.startsWith("pixelate");
-
-// --- COMPONENT ---
-
 export function ImageStudio() {
   const images = useQuery(api.images.getImages);
   const isConfigured = useQuery(api.images.checkConfig);
