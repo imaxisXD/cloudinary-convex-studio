@@ -6,26 +6,16 @@ import {
   isLargeFile,
   type UploadCredentials,
 } from "../utils/cloudinary";
+import {
+  useCloudinaryUpload,
+  usePendingUploads,
+  useUploadStatus,
+} from "@imaxis/cloudinary-convex/react";
+import type { CloudinaryAsset } from "@imaxis/cloudinary-convex";
 
-// --- TYPES (Kept same as before) ---
-type CloudinaryImage = {
-  _creationTime: number;
+type CloudinaryImage = CloudinaryAsset & {
   _id: string;
-  bytes?: number;
-  cloudinaryUrl: string;
-  folder?: string;
-  format: string;
-  height?: number;
-  metadata?: any;
-  originalFilename?: string;
-  publicId: string;
-  secureUrl: string;
-  tags?: Array<string>;
-  transformations?: Array<any>;
-  updatedAt: number;
-  uploadedAt: number;
-  userId?: string;
-  width?: number;
+  _creationTime: number;
 };
 
 interface TransformationOptions {
@@ -63,6 +53,9 @@ interface TransformationOptions {
   responsive?: boolean;
   auto?: string;
   fetchFormat?: string;
+  dpr?: string | number;
+  opacity?: number;
+  border?: string;
 }
 
 type PresetCategory =
@@ -310,19 +303,60 @@ const CATEGORY_INFO: Record<
   transform: { label: "Transform", icon: "🔄", description: "Orient & Zoom" },
 };
 
-export function ImageStudio() {
-  const images = useQuery(api.images.getImages);
-  const isConfigured = useQuery(api.images.checkConfig);
+function UploadIndicator({ userId }: { userId: string }) {
+  const { uploads, isLoading, hasUploading } = useUploadStatus(
+    api.cloudinary.getUploadsByStatus,
+    "uploading",
+    { userId },
+  );
 
-  const uploadImage = useAction(api.images.uploadImage);
-  const deleteImage = useAction(api.images.deleteImage);
-  const getUploadCredentials = useAction(api.images.getUploadCredentials);
-  const finalizeUpload = useAction(api.images.finalizeUpload);
+  if (isLoading || !hasUploading) return null;
+
+  return (
+    <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold animate-pulse border border-indigo-100">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+      </span>
+      {uploads.length} Upload{uploads.length !== 1 ? "s" : ""} in progress
+    </div>
+  );
+}
+
+export function ImageStudio() {
+  // Use listAssets with limit, type casting as any to avoid immediate type errors until codegen
+  const images = useQuery(api.cloudinary.listAssets, { limit: 50 }) as
+    | CloudinaryImage[]
+    | undefined;
+  const isConfigured = useQuery(api.cloudinary.checkConfig);
+
+  // Use the hook for base64 uploads (handles progress and state)
+  const {
+    upload: uploadBase64,
+    progress: base64Progress,
+    isUploading: isBase64Uploading,
+  } = useCloudinaryUpload(api.cloudinary.upload);
+
+  const { createPending, updateStatus } = usePendingUploads(
+    api.cloudinary.createPendingUpload,
+    api.cloudinary.updateUploadStatus,
+    api.cloudinary.deletePendingUpload,
+  );
+
+  const deleteAsset = useAction(api.cloudinary.deleteAsset);
+  const getUploadCredentials = useAction(
+    api.cloudinary.generateUploadCredentials,
+  );
 
   // State
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // "isUploading" and "uploadProgress" now track direct uploads or combined state
+  const [isDirectUploading, setIsDirectUploading] = useState(false);
+  const [directProgress, setDirectProgress] = useState(0);
   const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Combined state for UI
+  const isUploading = isDirectUploading || isBase64Uploading;
+  const uploadProgress = isDirectUploading ? directProgress : base64Progress;
 
   const [selectedImageForTransform, setSelectedImageForTransform] =
     useState<CloudinaryImage | null>(null);
@@ -341,13 +375,33 @@ export function ImageStudio() {
 
   // Query for transformed URL
   const getTransformedUrl = useQuery(
-    api.images.getTransformedUrl,
+    api.cloudinary.transform,
     selectedImageForTransform &&
       images?.some((img) => img.publicId === selectedImageForTransform.publicId)
       ? {
           publicId: selectedImageForTransform.publicId,
           transformation: {
-            ...transformSettings,
+            ...Object.fromEntries(
+              Object.entries(transformSettings).filter(([key]) =>
+                [
+                  "width",
+                  "height",
+                  "crop",
+                  "quality",
+                  "format",
+                  "gravity",
+                  "radius",
+                  "overlay",
+                  "effect",
+                  "angle",
+                  "zoom",
+                  "background",
+                  "dpr",
+                  "opacity",
+                  "border",
+                ].includes(key),
+              ),
+            ),
             quality:
               typeof transformSettings.quality === "number"
                 ? String(transformSettings.quality)
@@ -392,8 +446,6 @@ export function ImageStudio() {
 
   const performUpload = async (method: "base64" | "direct" | "auto") => {
     if (!stagedFile) return;
-    setIsUploading(true);
-    setUploadProgress(0);
 
     let finalMethod = method;
     if (method === "auto") {
@@ -404,43 +456,60 @@ export function ImageStudio() {
 
     try {
       if (finalMethod === "direct") {
-        // Direct Upload
-        const credentials = await getUploadCredentials({
+        setIsDirectUploading(true);
+        setDirectProgress(0);
+
+        // 1. Create Pending Upload
+        const { uploadId } = await createPending({
           filename: stagedFile.name,
           folder: "direct-uploads",
-        });
-        const uploadResult = await uploadDirectToCloudinary(
-          stagedFile,
-          credentials as UploadCredentials,
-          (progress) => setUploadProgress(progress),
-        );
-        await finalizeUpload({
-          publicId: uploadResult.public_id,
-          uploadResult,
           userId: "user-initiated",
         });
+
+        // 2. Update to uploading
+        await updateStatus(uploadId, "uploading");
+
+        try {
+          // Direct Upload
+          const credentials = await getUploadCredentials({
+            filename: stagedFile.name,
+            folder: "direct-uploads",
+          });
+          const uploadResult = await uploadDirectToCloudinary(
+            stagedFile,
+            credentials as UploadCredentials,
+            (progress) => setDirectProgress(progress),
+          );
+
+          // 3. Update to completed
+          await updateStatus(uploadId, "completed", {
+            publicId: uploadResult.public_id,
+            secureUrl: uploadResult.secure_url,
+            width: uploadResult.width,
+            height: uploadResult.height,
+            format: uploadResult.format,
+          });
+        } catch (error: any) {
+          // 4. Update to failed
+          await updateStatus(uploadId, "failed", {
+            errorMessage: error.message,
+          });
+          throw error;
+        }
       } else {
-        // Base64 Upload
-        const reader = new FileReader();
-        const base64Data = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(stagedFile);
-        });
-        setUploadProgress(50);
-        await uploadImage({
-          base64Data,
-          filename: stagedFile.name,
+        // Base64 Upload using the hook
+        // The hook handles isUploading and progress internally
+        await uploadBase64(stagedFile, {
           folder: "base64-uploads",
+          // Filename is handled by the hook if passed a File object
         });
-        setUploadProgress(100);
       }
       clearStagedFile();
       setShowUploadModal(false);
     } catch (error: any) {
       alert(`Upload failed: ${error.message}`);
     } finally {
-      setIsUploading(false);
+      setIsDirectUploading(false);
     }
   };
 
@@ -448,7 +517,7 @@ export function ImageStudio() {
     e.stopPropagation();
     if (confirm("Delete this image?")) {
       try {
-        await deleteImage({ publicId });
+        await deleteAsset({ publicId });
       } catch (err) {
         console.error(err);
       }
@@ -493,6 +562,7 @@ export function ImageStudio() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <UploadIndicator userId="user-initiated" />
           <a
             href="https://cloudinary.com"
             target="_blank"

@@ -5,7 +5,7 @@
     "": {
       "name": "cloudinary-convex-studio",
       "dependencies": {
-        "@imaxis/cloudinary-convex": "^0.1.1",
+        "@imaxis/cloudinary-convex": "^0.1.6",
         "convex": "^1.29.3",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
@@ -148,7 +148,7 @@
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
 
-    "@imaxis/cloudinary-convex": ["@imaxis/cloudinary-convex@0.1.1", "", { "peerDependencies": { "convex": "^1.24.8", "react": "^18.3.1 || ^19.0.0" } }, "sha512-d/2vGyMXMjeHtzT3o5yeJdUMu2YokXu/fFJItmf6NcO8j9pA/tjB+UCrc8efKzqkXYIBkRvF0hr4CpRSyWgOug=="],
+    "@imaxis/cloudinary-convex": ["@imaxis/cloudinary-convex@0.1.6", "", { "peerDependencies": { "convex": "^1.24.8", "react": "^18.3.1 || ^19.0.0" }, "optionalPeers": ["react"] }, "sha512-TPePtoWBbOCU1cLLnacI+aOFNQcu2/oVPwLmiqdBVASPZjIyFvulECrE4C4KXyB8XnR2lqPjoOyUA4Z937GJ1A=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 

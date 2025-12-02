@@ -8,7 +8,7 @@
  * @module
  */
 
-import type * as images from "../images.js";
+import type * as cloudinary from "../cloudinary.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +17,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  images: typeof images;
+  cloudinary: typeof cloudinary;
 }>;
 
 /**
@@ -49,6 +49,18 @@ export declare const internal: FilterApi<
 export declare const components: {
   cloudinary: {
     lib: {
+      createPendingUpload: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          filename?: string;
+          folder?: string;
+          metadata?: any;
+          tags?: Array<string>;
+          userId?: string;
+        },
+        { publicId: string; uploadId: string }
+      >;
       deleteAsset: FunctionReference<
         "action",
         "internal",
@@ -56,6 +68,12 @@ export declare const components: {
           config: { apiKey: string; apiSecret: string; cloudName: string };
           publicId: string;
         },
+        { error?: string; success: boolean }
+      >;
+      deletePendingUpload: FunctionReference<
+        "mutation",
+        "internal",
+        { uploadId: string },
         { error?: string; success: boolean }
       >;
       finalizeUpload: FunctionReference<
@@ -66,21 +84,50 @@ export declare const components: {
           publicId: string;
           uploadResult: {
             access_mode?: string;
+            accessibility_analysis?: any;
             api_key?: string;
+            asset_folder?: string;
             asset_id?: string;
+            batch_id?: string;
             bytes?: number;
+            colors?: Array<Array<any>>;
+            context?: any;
             created_at?: string;
+            delete_token?: string;
+            display_name?: string;
+            done?: boolean;
+            eager?: Array<{
+              bytes?: number;
+              format?: string;
+              height?: number;
+              secure_url?: string;
+              transformation?: string;
+              url?: string;
+              width?: number;
+            }>;
             etag?: string;
             existing?: boolean;
+            faces?: Array<Array<number>>;
             folder?: string;
             format: string;
+            grayscale?: boolean;
             height?: number;
+            illustration_score?: number;
+            image_metadata?: any;
+            media_metadata?: any;
+            moderation?: Array<any>;
+            original_extension?: string;
             original_filename?: string;
+            pages?: number;
+            phash?: string;
             placeholder?: boolean;
             public_id: string;
+            quality_analysis?: { focus?: number };
             resource_type?: string;
             secure_url: string;
+            semi_transparent?: boolean;
             signature?: string;
+            status?: string;
             tags?: Array<string>;
             type?: string;
             url: string;
@@ -102,15 +149,31 @@ export declare const components: {
           publicId?: string;
           tags?: Array<string>;
           transformation?: {
+            angle?: number | string;
+            aspectRatio?: string | number;
+            background?: string;
+            border?: string;
+            color?: string;
             crop?: string;
+            defaultImage?: string;
+            density?: number;
+            dpr?: number | string;
             effect?: string;
+            flags?: string | Array<string>;
             format?: string;
             gravity?: string;
             height?: number;
+            namedTransformation?: string;
+            opacity?: number;
             overlay?: string;
-            quality?: string;
+            page?: number;
+            quality?: string | number;
             radius?: number | string;
+            rawTransformation?: string;
             width?: number;
+            x?: number;
+            y?: number;
+            zoom?: number;
           };
           userId?: string;
         },
@@ -139,6 +202,7 @@ export declare const components: {
           _id: string;
           bytes?: number;
           cloudinaryUrl: string;
+          errorMessage?: string;
           folder?: string;
           format: string;
           height?: number;
@@ -146,6 +210,7 @@ export declare const components: {
           originalFilename?: string;
           publicId: string;
           secureUrl: string;
+          status: "pending" | "uploading" | "completed" | "failed";
           tags?: Array<string>;
           transformations?: Array<any>;
           updatedAt: number;
@@ -153,6 +218,36 @@ export declare const components: {
           userId?: string;
           width?: number;
         } | null
+      >;
+      getUploadsByStatus: FunctionReference<
+        "query",
+        "internal",
+        {
+          limit?: number;
+          status: "pending" | "uploading" | "completed" | "failed";
+          userId?: string;
+        },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          bytes?: number;
+          cloudinaryUrl: string;
+          errorMessage?: string;
+          folder?: string;
+          format: string;
+          height?: number;
+          metadata?: any;
+          originalFilename?: string;
+          publicId: string;
+          secureUrl: string;
+          status: "pending" | "uploading" | "completed" | "failed";
+          tags?: Array<string>;
+          transformations?: Array<any>;
+          updatedAt: number;
+          uploadedAt: number;
+          userId?: string;
+          width?: number;
+        }>
       >;
       listAssets: FunctionReference<
         "query",
@@ -171,6 +266,7 @@ export declare const components: {
           _id: string;
           bytes?: number;
           cloudinaryUrl: string;
+          errorMessage?: string;
           folder?: string;
           format: string;
           height?: number;
@@ -178,6 +274,7 @@ export declare const components: {
           originalFilename?: string;
           publicId: string;
           secureUrl: string;
+          status: "pending" | "uploading" | "completed" | "failed";
           tags?: Array<string>;
           transformations?: Array<any>;
           updatedAt: number;
@@ -193,15 +290,31 @@ export declare const components: {
           config: { apiKey: string; apiSecret: string; cloudName: string };
           publicId: string;
           transformation: {
+            angle?: number | string;
+            aspectRatio?: string | number;
+            background?: string;
+            border?: string;
+            color?: string;
             crop?: string;
+            defaultImage?: string;
+            density?: number;
+            dpr?: number | string;
             effect?: string;
+            flags?: string | Array<string>;
             format?: string;
             gravity?: string;
             height?: number;
+            namedTransformation?: string;
+            opacity?: number;
             overlay?: string;
-            quality?: string;
+            page?: number;
+            quality?: string | number;
             radius?: number | string;
+            rawTransformation?: string;
             width?: number;
+            x?: number;
+            y?: number;
+            zoom?: number;
           };
         },
         { secureUrl: string; transformedUrl: string }
@@ -215,6 +328,7 @@ export declare const components: {
           _id: string;
           bytes?: number;
           cloudinaryUrl: string;
+          errorMessage?: string;
           folder?: string;
           format: string;
           height?: number;
@@ -222,6 +336,44 @@ export declare const components: {
           originalFilename?: string;
           publicId: string;
           secureUrl: string;
+          status: "pending" | "uploading" | "completed" | "failed";
+          tags?: Array<string>;
+          transformations?: Array<any>;
+          updatedAt: number;
+          uploadedAt: number;
+          userId?: string;
+          width?: number;
+        } | null
+      >;
+      updateUploadStatus: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          bytes?: number;
+          cloudinaryUrl?: string;
+          errorMessage?: string;
+          format?: string;
+          height?: number;
+          publicId?: string;
+          secureUrl?: string;
+          status: "pending" | "uploading" | "completed" | "failed";
+          uploadId: string;
+          width?: number;
+        },
+        {
+          _creationTime: number;
+          _id: string;
+          bytes?: number;
+          cloudinaryUrl: string;
+          errorMessage?: string;
+          folder?: string;
+          format: string;
+          height?: number;
+          metadata?: any;
+          originalFilename?: string;
+          publicId: string;
+          secureUrl: string;
+          status: "pending" | "uploading" | "completed" | "failed";
           tags?: Array<string>;
           transformations?: Array<any>;
           updatedAt: number;
@@ -241,15 +393,31 @@ export declare const components: {
           publicId?: string;
           tags?: Array<string>;
           transformation?: {
+            angle?: number | string;
+            aspectRatio?: string | number;
+            background?: string;
+            border?: string;
+            color?: string;
             crop?: string;
+            defaultImage?: string;
+            density?: number;
+            dpr?: number | string;
             effect?: string;
+            flags?: string | Array<string>;
             format?: string;
             gravity?: string;
             height?: number;
+            namedTransformation?: string;
+            opacity?: number;
             overlay?: string;
-            quality?: string;
+            page?: number;
+            quality?: string | number;
             radius?: number | string;
+            rawTransformation?: string;
             width?: number;
+            x?: number;
+            y?: number;
+            zoom?: number;
           };
           userId?: string;
         },
